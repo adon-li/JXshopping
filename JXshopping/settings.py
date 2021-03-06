@@ -24,7 +24,7 @@ SECRET_KEY = 'cq6=h*-k7kcb(upugq!lm@_j)4web=761_+o%_-l3-*9akv*j#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-ALLOWED_HOSTS = ['www.jx.com','127.0.0.1']
+# ALLOWED_HOSTS = ['www.jx.com','127.0.0.1']
 
 
 # Application definition
@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'JXshopping.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'jxdb',
+        'HOST':'127.0.0.1',
+        'PORT':3306,
+        'USER':'root',
+        'PASSWORD':'root',
     }
 }
 
@@ -163,3 +167,5 @@ LOGGING = {
         },
     }
 }
+
+AUTH_USER_MODEL = 'users.User' #Django覆盖默认的user模型
