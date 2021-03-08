@@ -5,9 +5,11 @@
 # @Email   : muziyadong@gmail.com
 # @Software: PyCharm
 from django.urls import path
-from apps.users.views import UsernameCount
+from apps.users.views import UsernameCount,MobileCount,Register
 urlpatterns = [
-    path('usernames/<username>/count/',UsernameCount.as_view()),
+    path('usernames/<username:username>/count/',UsernameCount.as_view()),
+    path('mobiles/<mobile:mobile>/count/',MobileCount.as_view()),
+    path('register/',Register.as_view())
 ]
 
 

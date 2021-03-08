@@ -24,7 +24,7 @@ SECRET_KEY = 'cq6=h*-k7kcb(upugq!lm@_j)4web=761_+o%_-l3-*9akv*j#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-# ALLOWED_HOSTS = ['www.jx.com','127.0.0.1']
+ALLOWED_HOSTS = ['www.jx.com','127.0.0.1']
 
 
 # Application definition
@@ -36,14 +36,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.users'
+    'apps.users',
+    'corsheaders'#cors
 ]
 
 MIDDLEWARE = [
+    #cors配置要在最上面
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -169,3 +172,12 @@ LOGGING = {
 }
 
 AUTH_USER_MODEL = 'users.User' #Django覆盖默认的user模型
+
+# cors白名单
+CORS_ORIGIN_WHITELIST = (
+    'http://127.0.0.1:8080',
+    'http://localhost:8080',
+    'http://www.jx.com:8080',
+    'http://www.jx.com:8000',
+)
+CORS_ALLOW_CREDENTIALS = True
