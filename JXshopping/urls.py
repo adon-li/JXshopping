@@ -23,5 +23,6 @@ register_converter(MobileConverter,'mobile')
 urlpatterns = [
     path('admin/', admin.site.urls),
     #users子应用的路由
-    path('',include('apps.users.urls'))
+    path('',include('apps.users.urls')),
+    path('',include('apps.verifications.urls'))
 ]
