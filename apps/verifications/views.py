@@ -6,13 +6,17 @@ from django.views import View
 from libs.captcha.captcha import captcha
 from django_redis import get_redis_connection
 from random import randint
-from libs.yuntongxun.sms import CCP
+from celery_work.SMS.tasks import celery_send_sms_code
+
+
 class ImageCode(View):
-    def get(self,request,uuid):
-        text,image = captcha.generate_captcha()
+    def get(self, request, uuid):
+        text, image = captcha.generate_captcha()
         redis_conn = get_redis_connection('code')
         redis_conn.setex('img_%s' % uuid, 300, text)
-        return HttpResponse(image,content_type='image/jpeg')
+        return HttpResponse(image, content_type='image/jpeg')
+
+
 """
 用容联云平台发送短信
 平台有SDK包直接下载或者可以pip install ronglian_sms_sdk
@@ -22,29 +26,39 @@ class ImageCode(View):
 响应：json格式
 """
 
+
 class SMScode(View):
-    def get(self,request,mobile):
+    def get(self, request, mobile):
         image_code = request.GET.get('image_code')
         uuid = request.GET.get('image_code_id')
 
-        if not all([image_code,uuid]):
-            return JsonResponse({'code':400,'errmsg':'参数不全'})
+        if not all([image_code, uuid]):
+            return JsonResponse({'code': 400, 'errmsg': '参数不全'})
 
         redis_conn = get_redis_connection('code')
         redis_image_code = redis_conn.get('img_%s' % uuid)
         if redis_image_code is None:
-            return JsonResponse({'code':400,'errmsg':'验证码已过期'})
-        if redis_image_code.decode().lower() != image_code.lower() :
-            return JsonResponse({'code':400,'errmsg':'验证码错误'})
-        #提取保存60s的短信验证码
-        send_log = redis_conn.get('send_lod%s'%mobile)
+            return JsonResponse({'code': 400, 'errmsg': '验证码已过期'})
+        if redis_image_code.decode().lower() != image_code.lower():
+            return JsonResponse({'code': 400, 'errmsg': '验证码错误'})
+        # 提取保存60s的短信验证码
+        send_log = redis_conn.get('send_lod%s' % mobile)
         if send_log != None:
             return JsonResponse({'code': 400, 'errmsg': '发送短信过于频繁'})
 
-        sms_code = '%06d'% randint(0,999999)
-        #保存短信验证码
-        redis_conn.setex(mobile, 300, sms_code)
-        #暂时保存短信验证码60
-        redis_conn.setex('send_lod%s'%mobile,60,1)
-        CCP().send_template_sms('15065095058',[sms_code,5],1)
-        return JsonResponse({'code':0,'errmsg':'发送短信成功'})
+        sms_code = '%06d' % randint(0, 999999)
+
+        pipeline = redis_conn.pipeline()
+
+        pipeline.setex(mobile, 300, sms_code)
+        pipeline.setex('send_lod%s' % mobile, 60, 1)
+        pipeline.execute()
+        # 保存短信验证码
+        # redis_conn.setex(mobile, 300, sms_code)
+        # # 暂时保存短信验证码60
+        # #这时再次存储是重新建立redis一条连接存储
+        # redis_conn.setex('send_lod%s' % mobile, 60, 1)
+        # CCP().send_template_sms('15065095058', [sms_code, 5], 1)
+        #使用celery,调用celery的celery_send_sms_code方法，后面必须delay,
+        celery_send_sms_code.delay(mobile,sms_code)
+        return JsonResponse({'code': 0, 'errmsg': '发送短信成功'})
