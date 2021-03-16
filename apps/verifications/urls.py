@@ -6,9 +6,10 @@
 # @Software: PyCharm
 
 from django.urls import path
-from apps.verifications.views import ImageCode
+from apps.verifications.views import ImageCode,SMScode
 
 urlpatterns = [
     #users子应用的路由
-    path('image_codes/<uuid>/',ImageCode.as_view())
+    path('image_codes/<uuid>/',ImageCode.as_view()),
+    path('sms_codes/<mobile:mobile>/',SMScode.as_view())
 ]

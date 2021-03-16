@@ -12,7 +12,7 @@ var vm = new Vue({
         error_name_message: '',
         error_phone_message: '',
         error_sms_code_message: '',
-        error_image_code:'',
+        error_image_code: '',
 
         sms_code_tip: '获取短信验证码',
         sending_flag: false, // 正在发送短信标志
@@ -27,21 +27,21 @@ var vm = new Vue({
         mobile: '',
         sms_code: '',
         allow: false,
-        image_code:'',
-        error_image_code_message:''
+        image_code: '',
+        error_image_code_message: ''
     },
-    mounted: function(){
-		// 向服务器获取图片验证码
-		this.generate_image_code();
-	},
+    mounted: function () {
+        // 向服务器获取图片验证码
+        this.generate_image_code();
+    },
     methods: {
         // 生成一个图片验证码的编号，并设置页面中图片验证码img标签的src属性
-		generate_image_code: function(){
-			// 生成一个编号 : 严格一点的使用uuid保证编号唯一， 不是很严谨的情况下，也可以使用时间戳
-			this.image_code_id = generateUUID();
-			// 设置页面中图片验证码img标签的src属性
-			this.image_code_url = this.host + "/image_codes/" + this.image_code_id + "/";
-		},
+        generate_image_code: function () {
+            // 生成一个编号 : 严格一点的使用uuid保证编号唯一， 不是很严谨的情况下，也可以使用时间戳
+            this.image_code_id = generateUUID();
+            // 设置页面中图片验证码img标签的src属性
+            this.image_code_url = this.host + "/image_codes/" + this.image_code_id + "/";
+        },
         // 检查用户名
         check_username: function () {
             var re = /^[a-zA-Z0-9_-]{5,20}$/;
@@ -57,7 +57,7 @@ var vm = new Vue({
                 var url = this.host + '/usernames/' + this.username + '/count/';
                 axios.get(url, {
                     responseType: 'json',
-                    withCredentials:true,
+                    withCredentials: true,
                 })
                     .then(response => {
                         if (response.data.count > 0) {
@@ -101,7 +101,7 @@ var vm = new Vue({
                 var url = this.host + '/mobiles/' + this.mobile + '/count/';
                 axios.get(url, {
                     responseType: 'json',
-                     withCredentials:true,
+                    withCredentials: true,
                 })
                     .then(response => {
                         if (response.data.count > 0) {
@@ -117,14 +117,14 @@ var vm = new Vue({
             }
         },
         // 检查图片验证码
-		check_image_code: function (){
-			if(!this.image_code) {
-				this.error_image_code_message = '请填写图片验证码';
-				this.error_image_code = true;
-			} else {
-				this.error_image_code = false;
-			}
-		},
+        check_image_code: function () {
+            if (!this.image_code) {
+                this.error_image_code_message = '请填写图片验证码';
+                this.error_image_code = true;
+            } else {
+                this.error_image_code = false;
+            }
+        },
         check_sms_code: function () {
             if (!this.sms_code) {
                 this.error_sms_code_message = '请填写短信验证码';
@@ -157,12 +157,17 @@ var vm = new Vue({
 
             // 向后端接口发送请求，让后端发送短信验证码
             var url = this.host + '/sms_codes/' + this.mobile + '/' + '?image_code=' + this.image_code
-                + '&image_code_id=' + this.image_code_id
+                + '&image_code_id=' + this.image_code_id;
             axios.get(url, {
                 responseType: 'json',
-                withCredentials:true,
+                withCredentials: true,
             })
                 .then(response => {
+                    if (response.data.code==400) {
+                        this.error_sms_code = true;
+                        this.error_sms_code_message = response.data.errmsg;
+                        return
+                    }
                     // 表示后端发送短信成功
                     // 倒计时60秒，60秒后允许用户再次点击发送短信验证码的按钮
                     var num = 60;
@@ -202,7 +207,6 @@ var vm = new Vue({
             this.check_allow();
 
 
-
             // 点击注册按钮之后, 发送请求 (下面的代码是通过请求体传参的)
             if (this.error_name == false && this.error_password == false && this.error_check_password == false
                 && this.error_phone == false && this.error_sms_code == false && this.error_allow == false) {
@@ -215,11 +219,11 @@ var vm = new Vue({
                     allow: this.allow
                 }, {
                     responseType: 'json',
-                    withCredentials:true,
+                    withCredentials: true,
                 })
                     .then(response => {
-                        if (response.data.code==0) {
-                           location.href = 'index.html';
+                        if (response.data.code == 0) {
+                            location.href = 'index.html';
                         }
                         if (response.data.code == 400) {
                             alert(response.data.errmsg)
