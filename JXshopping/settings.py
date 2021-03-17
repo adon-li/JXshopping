@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.users',
     'apps.verifications',
-    'corsheaders'#cors
+    'corsheaders',#cors
+    'apps.oauth_login'
 ]
 
 MIDDLEWARE = [
