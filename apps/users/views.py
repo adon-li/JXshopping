@@ -28,7 +28,10 @@ from django.shortcuts import render
 """
 from django.views import View
 from apps.users.models import User
+from django_redis import get_redis_connection
 from django.http import JsonResponse
+from django.contrib.auth import authenticate
+from django.contrib.auth import login,logout
 import json
 import re
 class UsernameCount(View):
@@ -76,6 +79,7 @@ class Register(View):
         password = body_dict.get('password')
         password2 = body_dict.get('password2')
         mobile = body_dict.get('mobile')
+        sms_code = body_dict.get('sms_code')
         allow = body_dict.get('allow')
         #all中的元素，只要是none，false，all就返回False，否则返回True
         if not all([username,password,password2,mobile,allow]):
@@ -90,8 +94,93 @@ class Register(View):
             return JsonResponse({'code':400,'errmsg':'手机号不满足规则'})
         if allow != True:
             return JsonResponse({'code':400,'errmsg':'allow格式有误'})
+
+        redis_conn = get_redis_connection('code')
+        redis_sms_code = redis_conn.get(mobile)
+        if sms_code != redis_sms_code.decode():
+            return JsonResponse({'code':400,'errmsg':'短信验证码错误'})
+
         try:
             user = User.objects.create_user(username=username,password=password,mobile=mobile)
+
         except Exception as e:
             return JsonResponse({'code':400,'errmsg':'注册失败！'})
         return JsonResponse({'code':400,'errmsg':'注册成功！'})
+
+class Login(View):
+    def post(self,request):
+        data = json.loads(request.body.decode())
+        username = data.get('username')
+        password = data.get('password')
+        remembered = data.get('remembered')
+        #验证登录数据
+        if not all([username,password]):
+            return JsonResponse({'code':400,'errmsg':'参数不全'})
+        #用户名为手机号时也可以登录。User.USERNAME_FIELD默认是数据库username查询。
+        if re.match('1[3-9]\d{9}',username):
+            User.USERNAME_FIELD='mobile'
+        else:
+            User.USERNAME_FIELD='username'
+        #authenticate传递用户名和密码，如果有用户名和密码正确，返回User。否则返回None。
+        user = authenticate(username=username,password=password)
+        if user is None:
+            return JsonResponse({'code':400,'errmsg':'参数错误'})
+        #如果用户名密码正确，状态保持(session)
+        login(request,user)
+
+        if remembered:
+            request.session.set_expiry(None)
+        else:
+            request.session.set_expiry(0)
+        response =  JsonResponse({'code':0,'errmsg':'OK'})
+        response.set_cookie('username',username)
+        return response
+
+class Logout(View):
+    def delete(self,request):
+        #删除session信息，logout()中的request.session.flush()
+        logout(request)
+        #删除cookie信息，因为前端获取的cookie中的username
+        response = JsonResponse({'code':0,'errmsg':'OK'})
+        response.delete_cookie('username')
+        return response
+
+"""
+LoginRequiredMixin,登录用户认证，未登录用户，返回重定向，但是前端需要的是json数据，
+后端与前端通过json交互。
+需要返回json数据
+"""
+
+# from django.contrib.auth.mixins import AccessMixin,LoginRequiredMixin
+#方法一
+# class LoginRequiredJSONMixin(AccessMixin):
+#     """Verify that the current user is authenticated."""
+#     def dispatch(self, request, *args, **kwargs):
+#         if not request.user.is_authenticated:
+#             return JsonResponse({'code':400,'errmsg':'用户未登录'})
+#         return super().dispatch(request, *args, **kwargs)
+#
+# class Center(LoginRequiredJSONMixin,View):
+#     def get(self,request):
+#         return JsonResponse({'code':0,'errmsg':'OK'})
+
+#方法二
+# class LoginRequiredJSONMixin(LoginRequiredMixin):
+#     def handle_no_permission(self):
+#         return JsonResponse({'code':400,'errmsg':'用户未登录'})
+# class Center(LoginRequiredJSONMixin,View):
+#     def get(self,request):
+#         return JsonResponse({'code':0,'errmsg':'OK'})
+
+#以上两个人方法都可以，为了以后调用方便，单独放到utils的view_user文件中
+from utils.view_user import LoginRequiredJSONMixin
+class Center(LoginRequiredJSONMixin,View):
+    def get(self,request):
+        #request.user是来源于中间件，源码表示如果是已登录用户获取登录用户信息，如果不是，获取匿名用户信息（没有用户的ID、username等等）
+        info_data = {
+            'username':request.user.username,
+            'email':request.user.email,
+            'mobile':request.user.mobile,
+            'email_active':request.user.email_active,
+        }
+        return JsonResponse({'code':0,'errmsg':'OK','info_data':info_data})
