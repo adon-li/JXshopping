@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.verifications',
     'corsheaders',#cors
-    'apps.oauth_login'
+    'apps.oauth_login',
+    'apps.addrs'
 ]
 
 MIDDLEWARE = [
@@ -173,7 +174,7 @@ LOGGING = {
     }
 }
 CACHES = {
-    "default": { # 默认
+    "default": { #缓存地址省市数据
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://192.168.17.11:6379/0",
         "OPTIONS": {

@@ -26,7 +26,7 @@ class QQLogin(View):
     def get(self,request):
         qq = OAuthQQ(client_id = '101474184',
         client_secret =  'c6ce949e004e12ecc909ae6a8b09b637c',
-        redirect_uri = 'http://www.meiduo.site:8080/oauth_callback.html',
+        redirect_uri = 'http://www.jx.com:8080/oauth_callback.html',
         state = 'abc')
         qq_login_url = qq.get_qq_url()
         return JsonResponse({'code':0,'errmsg':'OK','login_url':qq_login_url})
