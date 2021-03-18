@@ -13,4 +13,4 @@ celery_app = Celery('celery_work')
 #加载配置配置文件，broker
 celery_app.config_from_object("celery_work.config")
 #自动检测指定包的任务
-celery_app.autodiscover_tasks(['celery_work.SMS'])
+celery_app.autodiscover_tasks(['celery_work.SMS','celery_work.email'])

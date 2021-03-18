@@ -32,6 +32,8 @@ from django_redis import get_redis_connection
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
 from django.contrib.auth import login,logout
+from utils.encryption import generic_email_verify_token,check_verifu_token
+from celery_work.email.tasks import celery_send_mail
 import json
 import re
 class UsernameCount(View):
@@ -184,3 +186,40 @@ class Center(LoginRequiredJSONMixin,View):
             'email_active':request.user.email_active,
         }
         return JsonResponse({'code':0,'errmsg':'OK','info_data':info_data})
+
+class Email(View):
+    def put(self,request):
+        data = json.loads(request.body.decode())
+        email = data.get('email')
+        if not email:
+            return JsonResponse({'code':400,'errmsg':'参数不全'})
+        if not re.match('^[a-z0-9][\w\\\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$',email):
+            return JsonResponse({'code':400,'errmsg':'邮箱格式错误'})
+        #获取登录用户
+        login_user = request.user
+        login_user.email = email
+        login_user.save()
+
+
+        # send_mail(subject=subject,
+        #           message=html_message,
+        #           from_email=from_email,
+        #           recipient_list=recipient_list)
+
+        verify_url = generic_email_verify_token(request.user)
+        celery_send_mail.delay(email,verify_url)
+        return JsonResponse({'code':0,'errmsg':'OK'})
+
+class EmailsVerification(View):
+    def put(self,request):
+        params = request.GET
+        token = params.get('token')
+        if token is None:
+            return JsonResponse({'code':400,'errmsg':'参数不全'})
+        user_id = check_verifu_token(token)
+        if user_id is None:
+            return JsonResponse({'code':400,'errmsg':'参数错误'})
+        user = User.objects.get(id=user_id)
+        user.email_active = True
+        user.save()
+        return JsonResponse({'code':0,'errmsg':'OK'})

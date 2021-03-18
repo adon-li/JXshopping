@@ -208,3 +208,10 @@ CORS_ORIGIN_WHITELIST = (
     'http://www.jx.com:8000',
 )
 CORS_ALLOW_CREDENTIALS = True
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.163.com'
+EMAIL_PORT = 25
+EMAIL_HOST_USER = 'fortunatedong@163.com'
+EMAIL_HOST_PASSWORD = 'DDBOFVCLBVUKKZMZ'
+EMAIL_FROM = '京西商城<fortunatedong@163.com>'

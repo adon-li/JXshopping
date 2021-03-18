@@ -15,14 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+
 #注册转换器，其他的应用都可以用
 from utils.converters import UsernameConverter,MobileConverter
 from django.urls import register_converter
 register_converter(UsernameConverter,'username')
 register_converter(MobileConverter,'mobile')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     #users子应用的路由
     path('',include('apps.users.urls')),
-    path('',include('apps.verifications.urls'))
+    path('',include('apps.verifications.urls')),
+    path('',include('apps.oauth_login.urls')),
 ]
