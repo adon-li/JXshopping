@@ -468,4 +468,3 @@ class UpdatePassword(View):
 
         # # 响应密码修改结果：重定向到登录界面
         return response
-    
