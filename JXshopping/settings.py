@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'apps.verifications',
     'corsheaders',#cors
     'apps.oauth_login',
-    'apps.addrs'
+    'apps.addrs',
+    'apps.contents',
+    'apps.goods',
 ]
 
 MIDDLEWARE = [
@@ -216,3 +218,5 @@ EMAIL_PORT = 25
 EMAIL_HOST_USER = 'fortunatedong@163.com'
 EMAIL_HOST_PASSWORD = 'DDBOFVCLBVUKKZMZ'
 EMAIL_FROM = '京西商城<fortunatedong@163.com>'
+
+DEFAULT_FILE_STORAGE = 'utils.fastdfs_storage.MyStorage'
