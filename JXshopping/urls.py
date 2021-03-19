@@ -30,4 +30,5 @@ urlpatterns = [
     path('',include('apps.verifications.urls')),
     path('',include('apps.oauth_login.urls')),
     path('',include('apps.addrs.urls')),
+    path('',include('apps.goods.urls')),
 ]

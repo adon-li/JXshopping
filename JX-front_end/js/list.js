@@ -105,7 +105,7 @@ var vm = new Vue({
         },
         // 请求商品数据
         get_skus: function(){
-            var url = this.host+'/list/'+this.cat+'/skus/'
+            var url = this.host+'/list/'+this.cat+'/skus/';
             axios.get(url, {
                     params: {
                         page: this.page,

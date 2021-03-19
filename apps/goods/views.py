@@ -35,3 +35,54 @@ class Index(View):
             'contents': contents,
         }
         return render(request, 'index.html', context)
+"""
+需求：根据点击的分类，获取分类数据，排序，分页
+前端：发送一个get请求，分类id在URL中，分页的页码，每页数据，排序都在请求中。
+后端：接受请求数据，查询数据，将对象返回响应（json）
+"""
+from apps.goods.models import GoodsCategory
+from django.http import JsonResponse
+from utils.goods import get_breadcrumb
+from apps.goods.models import SKU
+from  django.core.paginator import Paginator
+class ListView(View):
+    def get(self,request,category_id):
+        #获取前端的请求中排序的字段，用于排序
+        ordering = request.GET.get('ordering')
+        # 获取前端的请求中每页多少数据，用于分页
+        page_size = request.GET.get('page_size')
+        # 获取前端的请求中指定页数据
+        page = request.GET.get('page')
+
+        try:
+            # 获取三级菜单分类信息:
+            category = GoodsCategory.objects.get(id=category_id)
+        except Exception as e:
+            return JsonResponse({'code': 400,
+                                 'errmsg': '获取mysql数据出错'})
+        #获取面包屑数据
+        breadcrumb = get_breadcrumb(category)
+        #获取对应分类的sku数据,排序
+        SKUS = SKU.objects.filter(category=category,is_launched=True).order_by(ordering)
+        #分页
+        paginator = Paginator(SKUS,per_page=page_size)
+
+        page_skus = paginator.page(page)
+        sku_list = []
+        for sku in page_skus.object_list:
+            sku_list.append({
+                'id':sku.id,
+                'default_image_url':sku.default_image.url,
+                'name':sku.name,
+                'price':sku.price
+            })
+        #获取总页数
+        total_page = paginator.num_pages
+        return JsonResponse({
+            'code': 0,
+            'errmsg': 'ok',
+            'breadcrumb': breadcrumb,
+            'list': sku_list,
+            'count': total_page
+        })
+
